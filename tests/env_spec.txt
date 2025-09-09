@@ -1,0 +1,22 @@
+> Test env var feature
+
+# Set an environment variable to a literal value
+:. env MY_VAR "hello world"
+
+# Check if the variable is set
+$. printenv MY_VAR
+?. stdout "hello world"
+
+# Set a variable from a shellspec variable
+$. echo "another value"
+:. stdout @another_var
+:. env ANOTHER_VAR @another_var
+$. printenv ANOTHER_VAR
+?. stdout "another value"
+
+# Check that the variable is not in the parent environment
+# by running a new test case.
+> Test env var isolation
+
+# This test should not see MY_VAR from the previous test
+$! printenv MY_VAR

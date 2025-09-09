@@ -227,6 +227,9 @@ $> "25"                     # Send age
 
 :. stderr @variable         # Store stderr in variable
 
+:. env VAR_NAME "value"     # Set environment variable VAR_NAME to "value"
+:. env VAR_NAME @var        # Set environment variable from a shellspec variable
+
 :. file "path" [mode]       # Create file with content
 .. line 1                   # Content block: must immediately follow
 .. line 2                   # Content block: preserves whitespace

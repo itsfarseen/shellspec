@@ -49,6 +49,10 @@ $> "input_text"       # sendline("input_text")
 .. line content       # append line to file
 .. another line       # append another line
 
+# Environment Variables
+:. env FOO "bar"      # set environment variable FOO to "bar"
+:. env FOO @my_var    # set environment variable from @my_var
+
 # Content Lines
 # .. content            append to previous :. command
 # used for file content or exact assertions

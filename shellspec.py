@@ -485,6 +485,7 @@ class TestRunner:
         self.last_stdout = ""
         self.last_stderr = ""
         self.variables: dict[str, str] = {}
+        self.env_vars: dict[str, str] = {}
         self.temp_files: list[str] = []
         self.test_runs_dir = ""
         self.current_test_dir = ""
@@ -594,6 +595,10 @@ class TestRunner:
 
     def run_test_case(self, test_case: Stanza, test_suite: TestSuite) -> bool:
         """Run a single test case, return True if passed"""
+        # Reset state for test case isolation
+        self.variables.clear()
+        self.env_vars.clear()
+
         # Create unique test directory and change to it
         old_cwd = os.getcwd()
         self.current_test_dir = create_test_directory(
@@ -657,16 +662,20 @@ class TestRunner:
         cmd_line = [executable_path] + resolved_args
         args_str = " ".join(resolved_args)
 
+        # Create environment for subprocess
+        env = os.environ.copy()
+        env.update(self.env_vars)
+
         try:
             # Execute command based on whether it has pexpect interactions
             if command.pexpect_interactions:
                 # For pexpect commands, print in blue immediately
                 print(f"{T.blue}{command.token} {args_str}{T.clear}")
-                result = self._run_pexpect_command(command, cmd_line)
+                result = self._run_pexpect_command(command, cmd_line, env)
             else:
                 # Print the command being executed (initial yellow state)
                 print(f"{T.yellow}{command.token} {args_str}{T.clear}", end="\r")
-                result = self._run_subprocess_command(cmd_line)
+                result = self._run_subprocess_command(cmd_line, env)
                 # Determine command color based on exit code for subprocess commands
                 command_color = T.green if result.exit_code == 0 else T.red
                 print(f"{command_color}{command.token} {args_str}{T.clear}")
@@ -701,11 +710,13 @@ class TestRunner:
             print(f"  {e}")
             return False
 
-    def _run_subprocess_command(self, cmd_line: list[str]) -> ExecutionResult:
+    def _run_subprocess_command(
+        self, cmd_line: list[str], env: dict
+    ) -> ExecutionResult:
         """Execute command with subprocess and return ExecutionResult"""
         try:
             result = subprocess.run(
-                cmd_line, capture_output=True, text=True, timeout=SHELL_TIMEOUT
+                cmd_line, capture_output=True, text=True, timeout=SHELL_TIMEOUT, env=env
             )
             return ExecutionResult(
                 exit_code=result.returncode,
@@ -714,7 +725,7 @@ class TestRunner:
                 execution_type="subprocess",
             )
         except subprocess.TimeoutExpired:
-            raise Exception(f"Command timed out: {' '.join(cmd_line)}")
+            raise Exception(f"Command timed out: {" ".join(cmd_line)}")
         except FileNotFoundError:
             raise Exception(f"Executable not found: {cmd_line[0]}")
 
@@ -722,10 +733,11 @@ class TestRunner:
         self,
         command: Command,
         cmd_line: list[str],
+        env: dict,
     ) -> ExecutionResult:
         """Execute shell command with pexpect interactions and return ExecutionResult"""
         # Spawn the process with pexpect
-        proc = pexpect.spawn(cmd_line[0], cmd_line[1:], timeout=SHELL_TIMEOUT)
+        proc = pexpect.spawn(cmd_line[0], cmd_line[1:], timeout=SHELL_TIMEOUT, env=env)
         exception = None
 
         try:
@@ -948,6 +960,8 @@ class TestRunner:
             return self._store_variable(command, self.last_stdout)
         elif command.token == "stderr":
             return self._store_variable(command, self.last_stderr)
+        elif command.token == "env":
+            return self._set_env_var(command)
         elif command.token == "@":
             # Invoke snippet
             if not command.args:
@@ -982,6 +996,23 @@ class TestRunner:
         except Exception as e:
             print(f"Failed to create file {file_path}: {e}")
             return False
+
+    def _set_env_var(self, command: Command) -> bool:
+        """Set environment variable for subsequent shell commands in the test"""
+        if len(command.args) < 2:
+            print(f"Action 'env' requires 2 arguments, but got {len(command.args)}")
+            return False
+
+        var_name = command.args[0]
+        value_arg = command.args[1]
+
+        value = self._resolve_value(value_arg)
+        self.env_vars[var_name] = value
+
+        if verbose:
+            print(f"{T.green}▸ set env {var_name}='{value}' ✓{T.clear}")
+
+        return True
 
     def _store_variable(self, command: Command, value: str) -> bool:
         """Store value in variable"""
