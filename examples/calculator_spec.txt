@@ -1,0 +1,12 @@
+# Calculator Script Tests - Basic command testing patterns
+
+> Basic addition operation
+$. scripts/calculator.py add 5 3
+?. stdout "8.0"
+
+> Division by zero should fail  
+$! scripts/calculator.py div 10 0
+?. stderr "Division by zero"
+
+> Invalid arguments should fail
+$! scripts/calculator.py add abc 5

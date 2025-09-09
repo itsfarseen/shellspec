@@ -1,0 +1,23 @@
+# File Processor Script Tests - Advanced shellspec features
+
+>@ setup_test_files
+:. file test_sample.txt
+.. This is line one
+.. This is line two
+
+> Test with snippets and variables
+:. @ setup_test_files
+$. scripts/file_processor.py words test_sample.txt
+:. stdout @word_count
+?. == @word_count "8"
+
+> Test file content verification
+:. @ setup_test_files
+$. scripts/file_processor.py backup test_sample.txt
+?. file "test_sample.txt.bak"
+.. This is line one
+.. This is line two
+
+> Test error handling
+$! scripts/file_processor.py lines non_existent.txt
+?. stderr "File 'non_existent.txt' not found"

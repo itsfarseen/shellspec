@@ -1,0 +1,45 @@
+# Interactive Calculator Tests - Pexpect patterns
+
+> Basic interactive flow
+$. scripts/interactive_calculator.py
+$< Welcome to Interactive Calculator!
+$< Enter your choice:
+$> 1
+$< Enter first number:
+$> 5
+$< Enter second number:
+$> 3
+$< Result: 5.0 \+ 3.0 = 8.0
+$< Enter your choice:
+$> q
+$< Thank you for using Interactive Calculator!
+
+> Error handling in interactive mode
+$. scripts/interactive_calculator.py
+$< Welcome to Interactive Calculator!
+$< Enter your choice:
+$> 4
+$< Enter first number:
+$> 10
+$< Enter second number:
+$> 0
+$< Error: Division by zero!
+$< Enter your choice:
+$> q
+
+> History feature test
+$. scripts/interactive_calculator.py
+$< Welcome to Interactive Calculator!
+$< Enter your choice:
+$> 1
+$< Enter first number:
+$> 2
+$< Enter second number:
+$> 3
+$< Result: 2.0 \+ 3.0 = 5.0
+$< Enter your choice:
+$> 5
+$< --- Calculation History ---
+$< 1. 2.0 \+ 3.0 = 5.0
+$< Enter your choice:
+$> q
