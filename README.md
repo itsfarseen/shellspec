@@ -48,19 +48,42 @@ $. command args           # Run command expecting success
 ?. stdout "expected"      # Assert stdout contains "expected"
 ```
 
+## Demos and Examples
+
+**Calculator**
+
+See the [calculator_spec.txt](examples/calculator_spec.txt) for the test implementation.
+
+![Calculator Demo](screencasts/calculator.gif)
+
+
+**File Processor**
+
+See the [file_processor_spec.txt](examples/file_processor_spec.txt) for the test implementation.
+
+![File Processor Demo](screencasts/file_processor.gif)
+
+**Interactive Calculator**
+
+See the [interactive_calculator_spec.txt](examples/interactive_calculator_spec.txt) for the test implementation.
+
+![Interactive Calculator Demo](screencasts/interactive_calculator.gif)
+
+
 ## Configuration
 
-### Allowed Executables
+### Command Aliases
 
-For security, ShellSpec only allows execution of pre-approved commands. Edit the `ALLOWED_EXECUTABLES` dictionary in `shellspec.py`:
+ShellSpec allows you to define aliases for commands to simplify testing or provide custom paths. Edit the `COMMAND_ALIASES` dictionary in `shellspec.py`:
 
 ```python
-ALLOWED_EXECUTABLES = {
+COMMAND_ALIASES = {
     "myapp": "../path/to/myapp",
-    "python": "python",
-    "ls": "ls",
+    "python3": "/usr/bin/python3",
 }
 ```
+
+Commands not found in the aliases dictionary will be executed directly as system commands.
 
 ### Timeout Settings
 

@@ -29,9 +29,9 @@ class T:
     )
 
 
-# Allowed executables for shell commands
-# Maps command name to actual executable path (relative to this script)
-ALLOWED_EXECUTABLES = {
+# Command aliases for shell commands
+# Maps command alias to actual executable path (relative to this script)
+COMMAND_ALIASES = {
     "age-store.py": "../age-store.py",
 }
 
@@ -39,7 +39,7 @@ ALLOWED_EXECUTABLES = {
 verbose = False
 
 # Global timeout for shell commands (in seconds)
-SHELL_TIMEOUT = 30
+SHELL_TIMEOUT = 5
 
 
 def sanitize_test_name(name: str) -> str:
@@ -480,7 +480,7 @@ class TestSuite:
 
 
 class TestRunner:
-    def __init__(self):
+    def __init__(self, spec_file_path: Optional[str] = None):
         self.last_process = None
         self.last_stdout = ""
         self.last_stderr = ""
@@ -488,6 +488,7 @@ class TestRunner:
         self.temp_files: list[str] = []
         self.test_runs_dir = ""
         self.current_test_dir = ""
+        self.spec_file_path = spec_file_path
 
     def cleanup(self):
         """Clean up resources"""
@@ -627,24 +628,28 @@ class TestRunner:
 
     def _run_shell_command(self, command: Command) -> bool:
         """Execute shell command with unified diagnostic output"""
-        # Check if the command is allowed
-        if command.token not in ALLOWED_EXECUTABLES:
-            print(f"Command not allowed: {command.token}")
-            print(f"Allowed commands: {list(ALLOWED_EXECUTABLES.keys())}")
-            return False
-
-        # Get the actual executable path
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        exe_path = ALLOWED_EXECUTABLES[command.token]
+        exe_path = command.token
+        if exe_path in COMMAND_ALIASES:
+            exe_path = COMMAND_ALIASES[exe_path]
 
         if exe_path.startswith("/"):
-            # Absolute path: "/usr/bin/age"
+            # Absolute path
             executable_path = exe_path
         elif "/" in exe_path:
-            # Relative path: "../../age-store.py" or "./age"
-            executable_path = os.path.join(script_dir, exe_path)
+            # Relative path - resolve relative to spec file for direct commands, shellspec.py for aliases
+            if command.token in COMMAND_ALIASES:
+                # Alias: resolve relative to shellspec.py
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+            else:
+                # Direct command: resolve relative to spec file
+                base_dir = (
+                    os.path.dirname(self.spec_file_path)
+                    if self.spec_file_path
+                    else os.getcwd()
+                )
+            executable_path = os.path.join(base_dir, exe_path)
         else:
-            # System command: "age", "ls", "python"
+            # System command
             executable_path = exe_path
 
         # Resolve variables in command arguments
@@ -719,10 +724,11 @@ class TestRunner:
         cmd_line: list[str],
     ) -> ExecutionResult:
         """Execute shell command with pexpect interactions and return ExecutionResult"""
-        try:
-            # Spawn the process with pexpect
-            proc = pexpect.spawn(cmd_line[0], cmd_line[1:], timeout=SHELL_TIMEOUT)
+        # Spawn the process with pexpect
+        proc = pexpect.spawn(cmd_line[0], cmd_line[1:], timeout=SHELL_TIMEOUT)
+        exception = None
 
+        try:
             # Process each pexpect interaction
             for action_type, text in command.pexpect_interactions:
                 if action_type == "expect":
@@ -739,25 +745,26 @@ class TestRunner:
             # Wait for process to complete and get output
             proc.expect(pexpect.EOF)
             proc.close()
+        except pexpect.ExceptionPexpect as e:
+            exception = e
 
+        if not exception:
             exit_code = proc.exitstatus or 0
             print_with_left_border(
                 f"exit: {exit_code}", border_color=T.grey, text_color=T.grey
             )
-
-            return ExecutionResult(
-                exit_code=exit_code,
-                stdout=proc.before.decode("utf-8") if proc.before else "",
-                stderr="",  # pexpect doesn't separate stderr
-                execution_type="pexpect",
+        else:
+            exit_code = -1024
+            print_with_left_border(
+                f"error: {exception}", border_color=T.red, text_color=T.grey
             )
 
-        except pexpect.TIMEOUT:
-            raise Exception(f"Pexpect command timed out: {' '.join(cmd_line)}")
-        except pexpect.EOF as e:
-            raise Exception(f"Pexpect: unexpected EOF: {' '.join(cmd_line)}")
-        except Exception as e:
-            raise Exception(f"Pexpect error: {e}")
+        return ExecutionResult(
+            exit_code=exit_code,
+            stdout=proc.before.decode("utf-8") if proc.before else "",
+            stderr="",  # pexpect doesn't separate stderr
+            execution_type="pexpect",
+        )
 
     def _run_assertion(self, command: Command) -> bool:
         """Run assertion command"""
@@ -1039,7 +1046,7 @@ def main():
     try:
         dsl_parser = Parser(content)
         test_suite = dsl_parser.parse()
-        runner = TestRunner()
+        runner = TestRunner(os.path.abspath(test_file))
         success = runner.run_all_tests(test_suite, test_filter=args.test)
     except ValueError as e:
         print(f"Parse error: {e}")

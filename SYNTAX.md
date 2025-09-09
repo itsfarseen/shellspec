@@ -104,14 +104,16 @@ command # trailing_comment  # Trailing comment on any line
 
 ### Shell Commands (`$`)
 
-**Security Note**: Shell commands are restricted to a whitelist for security. To allow new commands, edit the `ALLOWED_EXECUTABLES` dictionary at the top of `shellspec.py`:
+**Command Aliases**: You can define aliases for commands to simplify testing or provide custom paths. Edit the `COMMAND_ALIASES` dictionary at the top of `shellspec.py`:
 
 ```python
-ALLOWED_EXECUTABLES = {
+COMMAND_ALIASES = {
     "age-store.py": "../age-store.py",
     "your-command": "/path/to/executable",
 }
 ```
+
+Commands not found in the aliases dictionary will be executed directly as system commands.
 
 Shell commands have two execution modes depending on whether interactive commands are present:
 
