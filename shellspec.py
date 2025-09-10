@@ -10,6 +10,7 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Optional
 
 import pexpect
@@ -96,7 +97,7 @@ def show_variable_values(values_dict):
         )
 
 
-def verbose_check(description, condition, variables=None):
+def verbose_check(description, condition, variables=None, contents=None):
     """Print assertion description and result, return condition value."""
     if condition:
         print(f"{T.green}▸ {description} ✓{T.clear}")
@@ -106,6 +107,13 @@ def verbose_check(description, condition, variables=None):
     # Show variable values after if provided
     if variables:
         show_variable_values(variables)
+
+    if contents:
+        print_with_left_border(
+            contents,
+            border_color=T.grey,
+            text_color=T.grey,
+        )
 
     return condition
 
@@ -847,53 +855,53 @@ class TestRunner:
         if not command.args:
             return False
 
-        file_path = command.args[0]
+        file_path = Path(command.args[0])
+        check_content_has = command.args[1] if len(command.args) >= 2 else None
+        check_content_exact = "\n".join(command.content)
 
-        # Check if file exists
-        exists = os.path.exists(file_path)
+        exists = file_path.exists()
+        contents = ""
+        if exists:
+            contents = file_path.read_text()
 
-        if len(command.args) == 1:
-            # Just checking existence
-            if command.negated:
-                msg = f"file '{file_path}' absent"
-            else:
-                msg = f"file '{file_path}' exists"
-            expected_result = not exists if command.negated else exists
-            return verbose_check(msg, expected_result)
+        # positive:
+        # - file must exist
+        # - if file_has: file must have it
+        # - if file_exact: file must equal it
+        # negative:
+        # - if file exist, it must have the content
 
-        if not exists:
-            msg = f"file '{file_path}' exists"
-            return verbose_check(msg, command.negated)
+        if not command.negated:
+            result = verbose_check(f"file '{file_path}' exists", exists)
+            if exists and check_content_has:
+                result = result and verbose_check(
+                    f"file '{file_path}' has '{check_content_has}'",
+                    contents.find(check_content_has) >= 0,
+                )
+            if exists and check_content_exact:
+                result = result and verbose_check(
+                    f"file '{file_path}' contents match",
+                    condition=(contents == check_content_exact),
+                    contents=f"File:\n{contents}\nTest:\n{check_content_exact}",
+                )
+            return result
+        else:
+            if not exists:
+                return verbose_check(f"file '{file_path}' doesn't exist", not exists)
 
-        # Check file content
-        if len(command.args) == 2:
-            search_text = command.args[1]
-            with open(file_path, "r") as f:
-                content = f.read()
-            found = search_text in content
-
-            if command.negated:
-                msg = f"file '{file_path}' lacks '{search_text}'"
-            else:
-                msg = f"file '{file_path}' has '{search_text}'"
-            expected_result = not found if command.negated else found
-            return verbose_check(msg, expected_result)
-
-        # Check exact content (from .. lines)
-        if command.content:
-            expected_content = "\n".join(command.content)
-            with open(file_path, "r") as f:
-                actual_content = f.read().strip()
-            matches = actual_content == expected_content
-
-            if command.negated:
-                msg = f"file '{file_path}' differs"
-            else:
-                msg = f"file '{file_path}' matches exactly"
-            expected_result = not matches if command.negated else matches
-            return verbose_check(msg, expected_result)
-
-        return True
+            result = True
+            if check_content_has:
+                result = verbose_check(
+                    f"file '{file_path}' lacks '{check_content_has}'",
+                    contents.find(check_content_has) < 0,
+                )
+            if check_content_exact:
+                result = result and verbose_check(
+                    f"file '{file_path}' contents don't match",
+                    condition=(contents != check_content_exact),
+                    contents=f"File:\n{contents}\nTest:\n{check_content_exact}",
+                )
+            return result
 
     def _assert_comparison(self, command: Command) -> bool:
         """Handle comparison assertions"""
