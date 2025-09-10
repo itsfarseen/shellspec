@@ -1,0 +1,54 @@
+> Basic command success
+$. echo "hello"
+?. stdout "hello"
+
+> Basic command failure
+$! cat no_such_file
+?. stderr "No such file"
+
+> Variable assignment and comparison
+$. echo "test value"
+:. stdout @my_var
+?. == @my_var "test value"
+
+> Negative assertion
+$. echo "hello"
+?! stdout "goodbye"
+
+> Stderr assertions
+$! ls /no_such_dir
+?. stderr "No such file or directory"
+?! stderr "should not contain this"
+
+> Exact stdout match
+$. printf "line 1\nline 2"
+?. stdout
+.. line 1
+.. line 2
+
+> Exact stdout match with trailing newline
+$. echo "hello"
+?. stdout
+.. hello
+.. 
+
+> Variable operations
+$. echo "hello world"
+:. stdout @greeting
+?. startswith @greeting "hello"
+?. endswith @greeting "world"
+?. contains @greeting "lo wo"
+?! contains @greeting "goodbye"
+
+> Variable comparisons
+$. echo "value1"
+:. stdout @var1
+$. echo "value2"
+:. stdout @var2
+?. != @var1 @var2
+?! == @var1 @var2
+
+> Store stderr
+$! cat no_such_file_for_stderr
+:. stderr @error_msg
+?. contains @error_msg "No such file"

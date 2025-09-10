@@ -1,0 +1,38 @@
+> Test file operations
+# Create a file
+:. file my_test_file.txt
+.. line 1
+.. line 2
+
+# Check for existence
+?. file my_test_file.txt
+
+# Check for content
+?. file my_test_file.txt "line 1"
+?. file my_test_file.txt "line 2"
+?! file my_test_file.txt "line 3"
+
+# Check for exact content
+?. file my_test_file.txt
+.. line 1
+.. line 2
+
+# Check for non-existence of another file
+?! file no_such_file.txt
+
+> More file assertions
+:. file another_file.txt
+.. some content
+# Check for content not present
+?! file another_file.txt "other content"
+
+# Check for exact content not matching
+?! file another_file.txt
+.. different content
+
+# Create a file with specific permissions
+:. file executable_file.sh 755
+.. echo "hello"
+# Check permissions
+$. stat -c "%a" executable_file.sh
+?. stdout "755"

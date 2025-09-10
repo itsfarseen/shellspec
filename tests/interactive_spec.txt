@@ -1,0 +1,8 @@
+> Interactive session test
+$. ./scripts/interactive_greeter.py
+$< What is your name\? 
+$> Alice
+$< Hello, Alice!
+$< What is your age\? 
+$> 30
+$< You are 30 years old.

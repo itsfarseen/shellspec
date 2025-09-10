@@ -1,0 +1,10 @@
+>@ create_a_file
+:. file snippet_file.txt
+.. from a snippet
+
+> Test snippet execution
+# Invoke the snippet
+:. @ create_a_file
+
+# Check if the file was created
+?. file snippet_file.txt "from a snippet"
