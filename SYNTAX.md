@@ -139,10 +139,15 @@ $! cat missing.txt          # Fast failure detection
 #### Pexpect Mode (Interactive)
 ```
 $. command [args...]        # Start interactive command
-$< "expected_text"          # Expect text from command output
-$> "input_text"             # Send text to command input
-$< "next_expected"          # Expect next response
+$< expected_text            # Expect text from command output
+$> input_text               # Send text to command input
+$< next_expected            # Expect next response
 ```
+
+**Note:** The `expected_text` for `$<` is treated as a **regular expression**.
+You must escape special regex characters like `?`, `*`, `+`, `(`, `)`.
+For example, to expect the text "What is your name?", you should write:
+`$< What is your name\?`
 
 - Slower execution using `pexpect` library (adds several seconds overhead)
 - Handles interactive programs that require user input

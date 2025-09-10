@@ -16,8 +16,8 @@ $. cmd args           # run command, expect success (exit 0)
 $! cmd args           # run command, expect failure (non-zero exit)
 
 # Pexpect Process Interaction
-$< "expected_text"    # expect("expected_text")
-$> "input_text"       # sendline("input_text")
+$< expected text    # expect("expected test") - text is a regex, escape special chars
+$> input text       # sendline("input test")
 
 # Assertions
 ?. stdout "text"      # stdout must contain "text"
