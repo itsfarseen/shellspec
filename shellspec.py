@@ -169,18 +169,27 @@ class Tokenizer:
 
         while not self.eof():
             char = self.line[self.pos]
-            if char == "\\" and self.pos + 1 < len(self.line):
-                # Escaped character
-                content += self.line[self.pos + 1]
-                self.pos += 2
+            if char == "\\":
+                self.pos += 1
+                if self.eof():
+                    # Dangling backslash
+                    content += "\\"
+                    break
+
+                next_char = self.line[self.pos]
+                if next_char == "\\" or next_char == quote_char:
+                    # Escaped backslash or quote char
+                    content += next_char
+                else:
+                    # Any other escaped char is treated literally
+                    content += "\\" + next_char
+                self.pos += 1
             elif char == quote_char:
-                # Found closing quote
                 self.pos += 1  # Skip closing quote
                 break
             else:
                 content += char
                 self.pos += 1
-
         return content
 
     def tokenize(self) -> list[str]:
@@ -428,7 +437,7 @@ class Parser:
                         )
 
                         # Treat the rest of the line as a single string
-                        content_text = pexpect_line[2:].strip()
+                        content_text = pexpect_line[3:]
                         if content_text:
                             pexpect_interactions.append((action_type, content_text))
                     else:
@@ -443,7 +452,7 @@ class Parser:
                 next_line = self.reader.peek()
                 if next_line and next_line.startswith(".."):
                     content_line = self.reader.consume()
-                    content.append(content_line[2:].strip())
+                    content.append(content_line[3:])
                 else:
                     break
             except EOFError:
@@ -800,7 +809,7 @@ class TestRunner:
         # Check for exact content (from .. lines)
         if command.content:
             expected_content = "\n".join(command.content)
-            actual_content = text.strip()
+            actual_content = text
             matches = actual_content == expected_content
 
             if command.negated:
