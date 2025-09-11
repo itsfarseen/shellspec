@@ -28,7 +28,7 @@ $> input text       # sendline("input test")
 ?. file "path"                 # file must exist
 ?! file "path"                 # file must not exist
 ?. file "path" "content"       # file must contain substring
-?. file "path" ! "content"     # file exists but must NOT contain substring
+
 
 # Exact file content check:
 ?. file "path"
