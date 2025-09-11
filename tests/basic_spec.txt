@@ -26,11 +26,99 @@ $. printf "line 1\nline 2"
 .. line 1
 .. line 2
 
+> Basic command success
+$. echo "hello"
+?. stdout "hello"
+
+> Basic command failure
+$! cat no_such_file
+?. stderr "No such file"
+
+> Variable assignment and comparison
+$. echo "test value"
+:. stdout @my_var
+?. == @my_var "test value"
+
+> Negative assertion
+$. echo "hello"
+?! stdout "goodbye"
+
+> Stderr assertions
+$! ls /no_such_dir
+?. stderr "No such file or directory"
+?! stderr "should not contain this"
+
+> Exact stdout match
+$. printf "line 1\nline 2"
+?. stdout
+.. line 1
+.. line 2
+
 > Exact stdout match with trailing newline
 $. echo "hello"
 ?. stdout
 .. hello
 .. 
+
+> Variable operations
+$. echo "hello world"
+:. stdout @greeting
+?. startswith @greeting "hello"
+?. endswith @greeting "world"
+?. contains @greeting "lo wo"
+?! contains @greeting "goodbye"
+
+> Variable comparisons
+$. echo "value1"
+:. stdout @var1
+$. echo "value2"
+:. stdout @var2
+?. != @var1 @var2
+?! == @var1 @var2
+
+> Store stderr
+$! cat no_such_file_for_stderr
+:. stderr @error_msg
+?. contains @error_msg "No such file"
+
+> Test trailing comments
+$. echo "hello" # this is a comment
+?. stdout "hello"
+?! stdout "comment"
+
+> Test exact stderr matching
+$. sh -c 'echo "error line 1" >&2; echo "error line 2" >&2'
+?. stderr
+.. error line 1
+.. error line 2
+.. 
+
+> Test negative exact stdout matching
+$. echo "one"
+?! stdout
+.. two
+
+> Test negative exact stderr matching
+$. echo "error one" >&2
+?! stderr
+.. error two
+
+> Test negated string operations
+$. echo "abcde"
+:. stdout @str
+?! startswith @str "b"
+?! endswith @str "d"
+
+> Test negated variable comparisons
+$. echo "val"
+:. stdout @v1
+$. echo "val"
+:. stdout @v2
+$. echo "other"
+:. stdout @v3
+?! != @v1 @v2 # Asserts that they are equal
+?. != @v1 @v3
+?! == @v1 "something else" 
 
 > Variable operations
 $. echo "hello world"

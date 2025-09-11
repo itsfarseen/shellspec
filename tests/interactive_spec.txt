@@ -5,4 +5,17 @@ $> Alice
 $< Hello, Alice!
 $< What is your age\? 
 $> 30
-$< You are 30 years old.
+$< Should I fail\? \(y/n\)
+$> n
+
+> Test interactive command failure
+$! ./scripts/interactive_greeter.py
+$< What is your name\? 
+$> Tester
+$< Hello, Tester!
+$< What is your age\? 
+$> 99
+$< You are 99 years old.
+$< Should I fail\? \(y/n\) 
+$> y
+?. stdout "Failing as requested."
