@@ -861,7 +861,7 @@ class TestRunner:
 
         exists = file_path.exists()
         contents = ""
-        if exists:
+        if exists and (check_content_exact or check_content_has):
             contents = file_path.read_text()
 
         # positive:

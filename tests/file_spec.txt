@@ -36,3 +36,13 @@
 # Check permissions
 $. stat -c "%a" executable_file.sh
 ?. stdout "755"
+
+> Test directory existence assertions
+# Create a directory
+$. mkdir test_directory
+
+# Check directory exists (should work without trying to read content)
+?. file test_directory
+
+# Check directory doesn't exist
+?! file nonexistent_directory
