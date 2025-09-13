@@ -1,0 +1,29 @@
+name: Docker CI Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  docker-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu, ubuntu-22, arch, alpine]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Run ${{ matrix.os }} tests
+      run: |
+        cd tests/docker
+        make ${{ matrix.os }}
+      env:
+        DOCKER_BUILDKIT: 1
