@@ -1,4 +1,4 @@
-name: Docker CI Tests
+name: CI Tests
 
 on:
   push:
@@ -7,6 +7,22 @@ on:
     branches: [ main ]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    - name: Install dependencies
+      run: pip install mypy black
+    - name: Run black
+      run: black --check shellspec.py
+    - name: Run mypy
+      run: mypy shellspec.py
+
   docker-tests:
     runs-on: ubuntu-latest
     strategy:
