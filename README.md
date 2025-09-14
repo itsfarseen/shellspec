@@ -1,3 +1,5 @@
+[![CI Tests](https://github.com/itsfarseen/shellspec/actions/workflows/ci.yml/badge.svg)](https://github.com/itsfarseen/shellspec/actions/workflows/ci.yml)
+
 # ShellSpec
 
 Testing framework for shell commands with declarative syntax.
