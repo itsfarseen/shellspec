@@ -750,11 +750,17 @@ class TestRunner:
         self,
         command: Command,
         cmd_line: list[str],
-        env: dict,
+        env: dict[str, str],
     ) -> ExecutionResult:
         """Execute shell command with pexpect interactions and return ExecutionResult"""
         # Spawn the process with pexpect
-        proc = pexpect.spawn(cmd_line[0], cmd_line[1:], timeout=SHELL_TIMEOUT, env=env)
+
+        proc = pexpect.spawn(
+            cmd_line[0],
+            cmd_line[1:],
+            timeout=SHELL_TIMEOUT,  #
+            env=env,  # type: ignore
+        )
         exception = None
 
         try:
@@ -790,7 +796,7 @@ class TestRunner:
 
         return ExecutionResult(
             exit_code=exit_code,
-            stdout=proc.before.decode("utf-8") if proc.before else "",
+            stdout=proc.before.decode("utf-8") if proc.before else "",  # type: ignore
             stderr="",  # pexpect doesn't separate stderr
             execution_type="pexpect",
         )

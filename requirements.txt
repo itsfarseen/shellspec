@@ -1,0 +1,7 @@
+mypy==1.18.1
+mypy_extensions==1.1.0
+pathspec==0.12.1
+pexpect==4.9.0
+ptyprocess==0.7.0
+types-pexpect==4.9.0.20250809
+typing_extensions==4.15.0
