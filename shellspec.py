@@ -11,7 +11,7 @@ import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Any
 
 import pexpect
 
@@ -152,7 +152,7 @@ class Tokenizer:
         """Check if we've reached the end of the line."""
         return self.pos >= len(self.line)
 
-    def peek(self) -> Optional[str]:
+    def peek(self) -> str | None:
         """Peek at the current character without consuming it."""
         if self.eof():
             return None
@@ -492,12 +492,12 @@ class TestSuite:
     def get_test_cases(self) -> list[Stanza]:
         return self.test_cases
 
-    def resolve_snippet(self, name: str) -> Optional[Stanza]:
+    def resolve_snippet(self, name: str) -> Stanza | None:
         return self._snippets.get(name)
 
 
 class TestRunner:
-    def __init__(self, spec_file_path: Optional[str] = None):
+    def __init__(self, spec_file_path: str | None = None):
         self.last_process = None
         self.last_stdout = ""
         self.last_stderr = ""
@@ -516,7 +516,7 @@ class TestRunner:
     def run_all_tests(
         self,
         test_suite: TestSuite,
-        test_filter: Optional[str] = None,
+        test_filter: str | None = None,
     ) -> bool:
         """Run all test cases from the test suite, return True if all passed"""
         passed = 0
@@ -909,7 +909,7 @@ class TestRunner:
             return False
 
         # Collect variable values for display
-        variables = {}
+        variables: dict[str, Any] = {}
         left_arg = command.args[0]
         right_arg = command.args[1]
         left = self._resolve_value(left_arg, variables)
@@ -951,7 +951,7 @@ class TestRunner:
         expected_result = not result if command.negated else result
         return verbose_check(msg, expected_result, variables)
 
-    def _resolve_value(self, value: str, context: dict = None) -> str:
+    def _resolve_value(self, value: str, context: dict[str, Any] | None = None) -> str:
         """Resolve variable or return literal value"""
         # Handle @variable syntax
         if value.startswith("@"):
